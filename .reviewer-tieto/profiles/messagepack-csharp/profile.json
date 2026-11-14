@@ -1,0 +1,29 @@
+{
+  "id": "messagepack-csharp",
+  "name": "MessagePack-CSharp",
+  "summary": "A .NET binary serializer that reads untrusted bytes at runtime, plus a Roslyn source generator and analyzers that emit code into consumer builds.",
+  "match": {
+    "remote_contains": [
+      "messagepack-csharp"
+    ],
+    "files_exist": [
+      "src/MessagePack/MessagePack.csproj"
+    ]
+  },
+  "test": {
+    "sdk_check": "bash <profile>/run-tests.sh <worktree> check",
+    "test_projects": [
+      "tests/MessagePack.SourceGenerator.Tests",
+      "tests/MessagePack.SourceGenerator.ExecutionTests",
+      "tests/MessagePack.Tests"
+    ],
+    "runner": "run-tests.sh",
+    "usage": "bash <profile>/run-tests.sh <throwaway worktree> check | setup | test <target> [filter]"
+  },
+  "upstream_issues": "MessagePack-CSharp/MessagePack-CSharp",
+  "deciders": {
+    "api-owner": "MessagePack maintainers",
+    "security-champion": "named per team"
+  },
+  "provenance": "Checklists written from the MessagePack-CSharp codebase and general .NET/Roslyn knowledge. Items tagged [from review <id>] were added after that review. Holdout branches (ju26-issue-2234, ju26-issue-2297) contributed nothing."
+}

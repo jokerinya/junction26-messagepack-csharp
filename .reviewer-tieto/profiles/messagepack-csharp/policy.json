@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "about": "MessagePack-CSharp profile policy. First matching area wins; content rules only look at added lines.",
+  "size_limits": {
+    "max_lines_per_unit": 400,
+    "max_files_per_unit": 15
+  },
+  "areas": [
+    {
+      "id": "core-runtime",
+      "globs": [
+        "src/MessagePack/**"
+      ],
+      "base_risk": "high",
+      "why": "Reads untrusted bytes at runtime in every consumer: crashes, DoS and data corruption land in production."
+    },
+    {
+      "id": "annotations-api",
+      "globs": [
+        "src/MessagePack.Annotations/**"
+      ],
+      "base_risk": "high",
+      "why": "Public attributes shipped to every consumer. Each addition is a permanent API commitment."
+    },
+    {
+      "id": "analyzer-release-tracking",
+      "globs": [
+        "src/**/AnalyzerReleases.*.md"
+      ],
+      "base_risk": "low",
+      "why": "Release bookkeeping for diagnostic ids."
+    },
+    {
+      "id": "source-generator",
+      "globs": [
+        "src/MessagePack.SourceGenerator/**"
+      ],
+      "base_risk": "medium",
+      "why": "Emits code into consumer builds. Bugs show up as wrong serialization or build breaks in user code."
+    },
+    {
+      "id": "other-src",
+      "globs": [
+        "src/**"
+      ],
+      "base_risk": "medium",
+      "why": "Shipped library code outside the core runtime."
+    },
+    {
+      "id": "tests",
+      "globs": [
+        "tests/**",
+        "benchmark/**",
+        "sandbox/**"
+      ],
+      "base_risk": "low",
+      "why": "Not shipped. Risk is weak tests, not runtime behaviour. Package references added here are still raised by the dependency-change rule."
+    },
+    {
+      "id": "build-and-deps",
+      "globs": [
+        "Directory.Packages.props",
+        "Directory.Build.*",
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets",
+        "global.json",
+        "nuget.config",
+        ".github/**",
+        "azure-pipelines/**",
+        "tools/**"
+      ],
+      "base_risk": "medium",
+      "why": "Supply chain and build integrity: what gets compiled and shipped."
+    },
+    {
+      "id": "docs",
+      "globs": [
+        "doc/**",
+        "*.md",
+        "**/*.md"
+      ],
+      "base_risk": "low",
+      "why": "Documentation only."
+    },
+    {
+      "id": "unclassified",
+      "globs": [
+        "**"
+      ],
+      "base_risk": "medium",
+      "why": "No policy area matched. Unknown is not low risk."
+    }
+  ],
+  "content_rules": [
+    {
+      "id": "unsafe-memory",
+      "pattern": "\\bunsafe\\b|Unsafe\\.|MemoryMarshal\\.|stackalloc|\\bfixed\\s*\\(",
+      "raise_to": "high",
+      "why": "Manual memory access. An off-by-one here is a buffer over-read, not just a wrong value."
+    },
+    {
+      "id": "type-loading",
+      "pattern": "Type\\.GetType|Typeless|Activator\\.CreateInstance|Assembly\\.Load|MakeGenericType",
+      "raise_to": "high",
+      "why": "Type names from the payload can choose which code runs (deserialization gadgets)."
+    },
+    {
+      "id": "security-settings",
+      "pattern": "MessagePackSecurity|UntrustedData|MaximumObjectGraphDepth|DepthStep|HashCollisionResistant",
+      "raise_to": "high",
+      "why": "Touches the library's own DoS and hash-flooding defences."
+    },
+    {
+      "id": "compression",
+      "pattern": "Lz4|LZ4",
+      "raise_to": "high",
+      "why": "Decompression of untrusted input (size bombs, length checks)."
+    },
+    {
+      "id": "length-from-payload",
+      "pattern": "ReadArrayHeader|ReadMapHeader|ReadBytes|ReadStringSequence|new\\s+\\w+\\[\\s*\\w*(length|count|len)",
+      "raise_to": "high",
+      "only_in": [
+        "src/**"
+      ],
+      "why": "Sizes read from the payload drive allocations and loops."
+    },
+    {
+      "id": "new-public-surface",
+      "pattern": "^\\s*public\\s",
+      "raise_to": "medium",
+      "only_in": [
+        "src/MessagePack/**",
+        "src/MessagePack.Annotations/**"
+      ],
+      "why": "New or changed public member in a shipped runtime package: an API compatibility decision."
+    },
+    {
+      "id": "dependency-change",
+      "pattern": "PackageVersion|PackageReference|<Version>",
+      "raise_to": "medium",
+      "only_in": [
+        "**/*.props",
+        "**/*.csproj",
+        "**/*.targets"
+      ],
+      "why": "A dependency was added or bumped: supply-chain review, and is it in scope?"
+    },
+    {
+      "id": "ci-pipeline",
+      "pattern": ".",
+      "raise_to": "high",
+      "only_in": [
+        ".github/workflows/**",
+        "azure-pipelines/**"
+      ],
+      "why": "CI definitions can exfiltrate secrets or skip checks."
+    }
+  ],
+  "tiers": {
+    "low": "T0",
+    "medium": "T1",
+    "high": "T2"
+  },
+  "tier_meaning": {
+    "T0": "Evidence check: the owner reads the dossier and spot-checks one verified claim (about 5 min).",
+    "T1": "Focused read: the owner reads only the listed hunks plus the dossier (about 15 min).",
+    "T2": "Full read: the owner reads every line of this area; for security rules, a security champion co-signs."
+  },
+  "area_trust": {
+    "earned_min_signoffs": 10,
+    "earned_min_spotcheck_agreement": 0.9,
+    "withdraw_after_escape_days": 30,
+    "earned_never_below": {
+      "high": "T1"
+    }
+  },
+  "generated_pairs": [
+    {
+      "source_ext": ".tt",
+      "generated_ext": ".cs",
+      "why": "T4 templates and their generated C# must change together."
+    }
+  ]
+}

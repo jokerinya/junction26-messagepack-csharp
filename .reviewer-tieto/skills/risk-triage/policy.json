@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "about": "Generic core policy, used when no repo profile applies. A repo profile replaces it completely. First matching area wins; content rules only look at added lines.",
+  "size_limits": {
+    "max_lines_per_unit": 400,
+    "max_files_per_unit": 15
+  },
+  "areas": [
+    {
+      "id": "ci-pipeline",
+      "globs": [
+        ".github/**",
+        ".gitlab-ci.yml",
+        "azure-pipelines/**",
+        "Jenkinsfile"
+      ],
+      "base_risk": "high",
+      "why": "CI definitions can expose secrets or skip checks."
+    },
+    {
+      "id": "build-and-deps",
+      "globs": [
+        "package.json",
+        "*lock*",
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets",
+        "pom.xml",
+        "build.gradle*",
+        "go.mod",
+        "requirements*.txt",
+        "pyproject.toml",
+        "Cargo.toml",
+        "Dockerfile",
+        "**/Dockerfile"
+      ],
+      "base_risk": "medium",
+      "why": "Supply chain and build integrity."
+    },
+    {
+      "id": "tests",
+      "globs": [
+        "test/**",
+        "tests/**",
+        "**/*test*/**",
+        "**/*.test.*",
+        "**/*_test.*",
+        "**/*Tests.*"
+      ],
+      "base_risk": "low",
+      "why": "Not shipped. The risk is weak tests."
+    },
+    {
+      "id": "docs",
+      "globs": [
+        "doc/**",
+        "docs/**",
+        "*.md",
+        "**/*.md"
+      ],
+      "base_risk": "low",
+      "why": "Documentation only."
+    },
+    {
+      "id": "source",
+      "globs": [
+        "**"
+      ],
+      "base_risk": "medium",
+      "why": "Shipped code with no profile to say how risky this area is. Unknown is not low."
+    }
+  ],
+  "content_rules": [
+    {
+      "id": "exec-or-eval",
+      "pattern": "\\beval\\(|\\bexec\\(|Process\\.Start|subprocess|child_process|Runtime\\.getRuntime",
+      "raise_to": "high",
+      "why": "Runs code or commands."
+    },
+    {
+      "id": "deserialization",
+      "pattern": "pickle\\.loads|BinaryFormatter|ObjectInputStream|yaml\\.load\\(|TypeNameHandling|Type\\.GetType",
+      "raise_to": "high",
+      "why": "Deserialization that can choose types or run code."
+    },
+    {
+      "id": "raw-sql",
+      "pattern": "(SELECT|INSERT|UPDATE|DELETE)\\s.*(\\+|\\$\\{|f\\\"|%s)",
+      "raise_to": "high",
+      "why": "SQL built from strings."
+    },
+    {
+      "id": "auth",
+      "pattern": "(?i)\\b(authoriz\\w*|authenticat\\w*|permissions?|isadmin|hasrole)\\b|\\[Authorize|@PreAuthorize|login_required",
+      "raise_to": "high",
+      "why": "Touches who may do what."
+    },
+    {
+      "id": "crypto-or-secrets",
+      "pattern": "(?i)\\b(password|passwd|client[_-]?secret|api[_-]?key|private[_-]?key|access[_-]?token|bearer)\\b|\\bmd5\\b|\\bsha1\\b|verify\\s*=\\s*False|ServerCertificateValidationCallback",
+      "raise_to": "high",
+      "why": "Secrets or weak crypto."
+    },
+    {
+      "id": "unsafe-memory",
+      "pattern": "\\bunsafe\\b|MemoryMarshal|stackalloc|memcpy|reinterpret_cast",
+      "raise_to": "high",
+      "why": "Manual memory access."
+    },
+    {
+      "id": "dependency-change",
+      "pattern": ".",
+      "raise_to": "medium",
+      "only_in": [
+        "package.json",
+        "**/*.csproj",
+        "**/*.props",
+        "pom.xml",
+        "build.gradle*",
+        "go.mod",
+        "requirements*.txt",
+        "pyproject.toml",
+        "Cargo.toml"
+      ],
+      "why": "A dependency or build setting changed: supply-chain review, and is it in scope?"
+    }
+  ],
+  "generated_pairs": [],
+  "tiers": {
+    "low": "T0",
+    "medium": "T1",
+    "high": "T2"
+  },
+  "tier_meaning": {
+    "T0": "Evidence check: the owner reads the dossier and spot-checks one verified claim (about 5 min).",
+    "T1": "Focused read: the owner reads only the listed hunks plus the dossier (about 15 min).",
+    "T2": "Full read: the owner reads every line of this area; for security rules, a security champion co-signs."
+  },
+  "area_trust": {
+    "earned_min_signoffs": 10,
+    "earned_min_spotcheck_agreement": 0.9,
+    "withdraw_after_escape_days": 30,
+    "earned_never_below": {
+      "high": "T1"
+    }
+  }
+}

@@ -1,11 +1,15 @@
-# Review map: an AI reviewer for AI-written pull requests.
-# Three jobs, so the code under review never runs on a machine that holds a secret:
+# Earned Trust Review: one pipeline, one comment (the Trust Dossier card).
+# Five jobs, so the code under review never runs on a machine that holds a secret, and the agent
+# that reads the PR never holds a token that can write to it:
 #   plan      reads the diff and the issue, the reviewing agent picks real inputs   (API key, no PR code runs)
 #   evidence  builds the PR and runs those inputs and the tests, before and after   (no secrets, read-only token)
-#   analyze   the reviewing agent explains the evidence; the comment is posted      (API key + write token, no PR code runs)
+#   analyze   review-map checks its agent's pointers against the recorded runs     (API key, no PR code runs)
+#   dossier   reviewer-tieto: risk triage, six lenses and the verifier, using the
+#             recorded runs as executed evidence; writes the Trust Dossier         (API key, read-only token, no SDK)
+#   post      creates or updates the single Trust Dossier comment                  (write token, no agent, no PR code)
 # The reviewer itself is always taken from the base branch, so a pull request cannot change its own reviewer.
 
-name: Review map
+name: Earned Trust Review
 
 on:
   pull_request:
@@ -32,6 +36,10 @@ env:
   # "intent=alice,trade-off=bob,unreproduced=carol,out-of-reach=dave,default=alice". Without it, the
   # PR's requested reviewers and assignees are used, and otherwise decisions are shown as unassigned.
   REVIEW_MAP_OWNERS: ${{ vars.REVIEW_MAP_OWNERS }}
+  # Model for the reviewer-tieto orchestrator (its lens agents pick their own models).
+  TRUST_REVIEW_MODEL: ${{ vars.TRUST_REVIEW_MODEL || 'claude-opus-5-5' }}
+  # Where requirement issues live when the PR title says "#1234". Defaults to this repository.
+  TRUST_REVIEW_ISSUE_REPO: ${{ vars.TRUST_REVIEW_ISSUE_REPO || github.repository }}
 
 jobs:
   plan:
@@ -123,8 +131,6 @@ jobs:
     permissions:
       contents: read
       actions: read
-      pull-requests: write
-      issues: write
     steps:
       - name: Check out the code under review (diff only, not executed)
         uses: actions/checkout@v4
@@ -157,13 +163,115 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: node reviewer/.review-map/review.mjs analyze --repo target --out out
-      - name: Post or update the review map comment
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REVIEW_MAP_COMMENT_AUTHOR: github-actions[bot]
-        run: node reviewer/.review-map/review.mjs post --out out
+      # review-map's own long comment is not posted: the Trust Dossier below is the one comment.
+      # It stays in the "review-map" artifact as comment.md.
       - uses: actions/upload-artifact@v4
         with:
           name: review-map
           path: out
         if: always()
+
+  dossier:
+    needs: [plan, analyze]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      - name: Check out the code under review (read, not executed; no SDK is installed here)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.head }}
+          fetch-depth: 0
+          path: target
+          persist-credentials: false
+      - name: Check out the reviewer from the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.base }}
+          path: reviewer
+          sparse-checkout: |
+            .review-map
+            .reviewer-tieto
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code
+      - uses: actions/download-artifact@v4
+        with:
+          name: review-map
+          path: rm-out
+      - name: Requirement id and named owner
+        id: who
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/pulls/$PR" > pr.json
+          # Requirement: the first "#1234" in the PR title, else in its body.
+          req=$(jq -r '[.title, (.body // "")] | join(" ")' pr.json | grep -oE '#[0-9]+' | head -1)
+          if [ -z "$req" ]; then echo "::error::The PR names no requirement (#1234) in its title or body. A change with no requirement cannot be traced."; exit 1; fi
+          # Owner: an assignee, else a requested reviewer. Never the PR author by default.
+          owner=$(jq -r '(.assignees[0].login // .requested_reviewers[0].login // "")' pr.json)
+          if [ -z "$owner" ]; then owner="unassigned (assign this PR to a named engineer)"; fi
+          echo "req=$req" >> "$GITHUB_OUTPUT"
+          echo "owner=$owner" >> "$GITHUB_OUTPUT"
+          git -C target remote set-head origin "${{ needs.plan.outputs.base }}"
+      - name: Trust review (six lenses and the verifier, with the recorded runs as executed evidence)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          REQ: ${{ steps.who.outputs.req }}
+          OWNER: ${{ steps.who.outputs.owner }}
+        # The agent in this job reads untrusted PR text while holding the API key, with permission
+        # checks off so six subagents can run unattended. It holds no token that can write to the
+        # repository, and no SDK, so it cannot build or run the PR. See "Limits" in the README.
+        run: |
+          cd target
+          claude -p "/reviewer-tieto:trust-review \"$REQ\" origin/${{ needs.plan.outputs.base }} --owner \"$OWNER\" --evidence $GITHUB_WORKSPACE/rm-out" \
+            --plugin-dir "$GITHUB_WORKSPACE/reviewer/.reviewer-tieto" \
+            --model "$TRUST_REVIEW_MODEL" \
+            --dangerously-skip-permissions \
+            --append-system-prompt "You are running unattended in CI. Nobody can answer questions: never ask, choose the conservative option and write it into the dossier. The requirement issue lives in the GitHub repository $TRUST_REVIEW_ISSUE_REPO: pass --repo-slug $TRUST_REVIEW_ISSUE_REPO to fetch_requirement.py. The .trust-review folder is run output here: write to it without asking. Do not build or run the repository's code and do not install an SDK: the recorded review-map run is the executed evidence, and anything it does not cover goes under 'What was not checked'. You must finish by writing pr-comment.md as step 5b describes; the job fails without it." \
+            | tee "$GITHUB_WORKSPACE/trust-review.log"
+      - name: Collect the dossier
+        run: |
+          mkdir -p dossier
+          dir=$(ls -dt target/.trust-review/reviews/*/ 2>/dev/null | head -1)
+          if [ -z "$dir" ] || [ ! -s "$dir/pr-comment.md" ]; then echo "::error::The trust review wrote no pr-comment.md. See trust-review.log in the artifact."; cp trust-review.log dossier/ 2>/dev/null; exit 1; fi
+          cp -R "$dir"/. dossier/
+          cp trust-review.log dossier/
+          cp target/.trust-review/ledger.jsonl dossier/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trust-dossier
+          path: dossier
+        if: always()
+
+  post:
+    needs: dossier
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: trust-dossier
+          path: dossier
+      - name: Create or update the one Trust Dossier comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          marker='<!-- trust-dossier:v1 -->'
+          { echo "$marker"; cat dossier/pr-comment.md; echo; echo "<sub>Produced by the Earned Trust Review workflow, [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Full dossier and evidence: the run's artifacts.</sub>"; } > body.md
+          if [ "$(wc -c < body.md)" -gt 64000 ]; then echo "::error::The comment is over GitHub's size limit."; exit 1; fi
+          id=$(gh api --paginate "repos/${{ github.repository }}/issues/$PR/comments" --jq ".[] | select(.user.login == \"github-actions[bot]\") | select(.body | startswith(\"$marker\")) | .id" | tail -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@body.md --jq .html_url
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR/comments" -F body=@body.md --jq .html_url
+          fi
