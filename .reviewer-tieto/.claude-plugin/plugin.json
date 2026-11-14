@@ -1,7 +1,7 @@
 {
   "name": "reviewer-tieto",
   "displayName": "Earned Trust AI Review",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "AI review that earns human trust: explainable risk routing, six evidence-based lenses, an adversarial verifier, and a Trust Dossier a named human signs. Tracks outcomes so trust is earned per area and withdrawn after escapes.",
   "author": {
     "name": "agentlemen team"

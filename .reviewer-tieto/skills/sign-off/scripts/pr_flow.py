@@ -5,7 +5,8 @@ Used by the GitHub Actions workflows (and usable by hand with a `gh` login):
 
   pr_flow.py post-card --slug OWNER/REPO --pr N --head SHA --dossier-dir DIR [--run-url URL]
       Posts or updates the single Trust Dossier comment, sets the "Trust sign-off" status on the
-      head commit to pending, and appends the review to the ledger branch.
+      head commit to pending, writes a short summary into the PR description, and appends the
+      review to the ledger branch.
 
   pr_flow.py sign-off --slug OWNER/REPO --pr N --author LOGIN --comment-id ID [--dry-run]
       Handles a "/sign-off ..." comment. The comment text is read from the SIGN_OFF_BODY
@@ -20,6 +21,10 @@ Used by the GitHub Actions workflows (and usable by hand with a `gh` login):
       - accepting a BLOCK or NOT-FIX recommendation needs --overrule "why".
       On success: the status turns green (accept) or red (reject), the card header shows who
       signed, and the sign-off is appended to the ledger branch.
+
+  pr_flow.py sync-description --slug OWNER/REPO --pr N [--dry-run]
+      Rewrites the summary block at the end of the PR description from the card. post-card and
+      sign-off do this themselves; this is for repairing a PR by hand.
 
   pr_flow.py ledger-pull --slug OWNER/REPO --to FILE
       Copies the ledger from the ledger branch to FILE (no file is written when there is none).
@@ -138,6 +143,56 @@ def set_status(slug, sha, state, description, target_url=None):
     gh("POST", "repos/%s/statuses/%s" % (slug, sha), body)
 
 
+DESC_START = "<!-- trust-review:start -->"
+DESC_END = "<!-- trust-review:end -->"
+
+
+def description_block(card_body, card_url):
+    """A short summary of the card for the PR description: verdict, signature, counts, link.
+    Everything is read from the card itself, so the two cannot disagree."""
+    f = card_fields(card_body)
+    lines = card_body.split("\n")
+    verdict = next((l for l in lines if l.startswith("**") and "· Owner:" in l), "")
+    verdict = verdict.split(" · Owner:")[0].strip()
+    signed = next((l for l in lines if l.startswith("**✍️ ")), None)
+    cells = []
+    for i, l in enumerate(lines):
+        if l.startswith("|:-:") and i + 1 < len(lines):
+            cells = [c.strip().replace("**", "").replace(" for you", "") for c in lines[i + 1].strip().strip("|").split("|")]
+            break
+    owner = f.get("owner") or "a named owner"
+    out = [DESC_START, "---", "### 🔍 Trust review",
+           "%s · review `%s` · commit `%s`" % (verdict or "**%s**" % f.get("outcome", ""), f.get("review", ""), (f.get("head") or "")[:8]),
+           "", signed or "⏳ **Unsigned.** Waiting for `%s` to sign. The merge is blocked until then." % owner]
+    if len(cells) == 4:
+        out += ["", "AI found: %s · AI refused to decide: %s · Owner reads: %s · Residual risk: %s" % tuple(cells)]
+    out += ["", "[Full Trust Dossier](%s) · The AI does not approve. A named human signs." % card_url, DESC_END]
+    return "\n".join(out)
+
+
+def update_description(slug, pr, card_body, card_url, dry_run=False):
+    """Writes the summary at the end of the PR description, between markers, leaving the author's text alone."""
+    body = gh("GET", "repos/%s/pulls/%s" % (slug, pr)).get("body") or ""
+    block = description_block(card_body, card_url)
+    if DESC_START in body and DESC_END in body:
+        new = body[:body.index(DESC_START)] + block + body[body.index(DESC_END) + len(DESC_END):]
+    else:
+        new = body.rstrip() + "\n\n" + block + "\n"
+    if dry_run:
+        print("description block:\n" + block)
+    elif new != body:
+        gh("PATCH", "repos/%s/pulls/%s" % (slug, pr), {"body": new})
+        print("description: updated")
+
+
+def cmd_sync_description(a):
+    card = find_card(a.slug, a.pr)
+    if not card:
+        sys.exit("No Trust Dossier comment on this PR.")
+    update_description(a.slug, a.pr, card["body"], card["html_url"], a.dry_run)
+    return 0
+
+
 def cmd_post_card(a):
     with open(os.path.join(a.dossier_dir, "dossier.json"), encoding="utf-8") as f:
         d = json.load(f)
@@ -167,6 +222,7 @@ def cmd_post_card(a):
     if outcome in ("BLOCK", "NOT-FIX"):
         desc = "AI recommends %s. Waiting for %s to reject or overrule" % (outcome, who)
     set_status(a.slug, a.head, "pending", desc, res.get("html_url"))
+    update_description(a.slug, a.pr, body, res.get("html_url"))
 
     led = os.path.join(a.dossier_dir, LEDGER_FILE)
     if os.path.isfile(led):
@@ -306,6 +362,7 @@ def cmd_sign_off(a):
     print("status: %s: %s" % ("success" if signed else "failure", desc))
     if not a.dry_run:
         gh("PATCH", "repos/%s/issues/comments/%s" % (a.slug, card["id"]), {"body": "\n".join(lines)})
+        update_description(a.slug, a.pr, "\n".join(lines), card.get("html_url"))
         set_status(a.slug, head, "success" if signed else "failure", desc, card.get("html_url"))
     react("+1")
     if cmd["minutes"] is None and not a.dry_run:
@@ -334,6 +391,9 @@ def main():
     s = sub.add_parser("sign-off")
     s.add_argument("--slug", required=True); s.add_argument("--pr", required=True); s.add_argument("--author", required=True)
     s.add_argument("--comment-id"); s.add_argument("--dry-run", action="store_true"); s.set_defaults(fn=cmd_sign_off)
+    s = sub.add_parser("sync-description")
+    s.add_argument("--slug", required=True); s.add_argument("--pr", required=True)
+    s.add_argument("--dry-run", action="store_true"); s.set_defaults(fn=cmd_sync_description)
     s = sub.add_parser("ledger-pull")
     s.add_argument("--slug", required=True); s.add_argument("--to", required=True); s.set_defaults(fn=cmd_ledger_pull)
     a = ap.parse_args()

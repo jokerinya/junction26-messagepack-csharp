@@ -83,7 +83,9 @@ In the GitHub Actions pipeline the named owner signs with a comment on the PR, a
 | Accepting a `BLOCK` or `NOT-FIX` recommendation needs `--overrule "why"` | The human can overrule the AI, but has to say why, and the reason is recorded and shown on the card |
 | The card is found only among the workflow's own comments | Nobody can plant a card with a friendlier outcome |
 
-A valid sign-off turns the **Trust sign-off** status green (red for reject), changes the card header to "SIGNED by `<name>`", and appends the sign-off to `ledger.jsonl` on the `trust-ledger` branch. The pipeline reads that branch at the start of every review, so area trust is earned from real history. To block merges, make **Trust sign-off** a required status check on the target branch. Repository admins can still bypass it unless the rule says otherwise.
+A valid sign-off turns the **Trust sign-off** status green (red for reject), changes the card header to "SIGNED by `<name>`", and appends the sign-off to `ledger.jsonl` on the `trust-ledger` branch. The pipeline reads that branch at the start of every review, so area trust is earned from real history. The workflow also keeps a short **Trust review** summary at the end of the PR description (verdict, who signed, the four counts, a link to the card), between `<!-- trust-review:start -->` and `<!-- trust-review:end -->`. A comment can get buried; the description is what a developer or an agent reads first. With the repository set to use the PR title and description as the merge or squash commit message, the summary also lands in the git history. It is a convenient copy, not the record: anyone with write access can edit a description, so the ledger stays the source of truth.
+
+To block merges, make **Trust sign-off** a required status check on the target branch. Repository admins can still bypass it unless the rule says otherwise.
 
 Script: `skills/sign-off/scripts/pr_flow.py` (`post-card`, `sign-off`, `ledger-pull`). Workflow: `review-map/workflows/trust-sign-off.yml`. The local command `/reviewer-tieto:sign-off` still works and records more detail (units read, spot-check, AI misses).
 
