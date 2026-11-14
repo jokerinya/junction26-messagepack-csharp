@@ -1,0 +1,333 @@
+[
+  {
+    "id": "issue-repro",
+    "title": "The exact repro from issue #2283: generic record struct in a referenced assembly",
+    "referencedSource": "using MessagePack;\nnamespace Lib;\n[MessagePackObject]\npublic partial record struct Item\u003CT\u003E([property: Key(0)] string Key);\n",
+    "projectSource": "using MessagePack;\nusing Lib;\nnamespace App;\n[MessagePackObject]\npublic sealed partial record Cmd([property: Key(0)] string Scope)\n{\n    [Key(1)]\n    public Item\u003Cint\u003E Member { get; init; }\n}\n",
+    "model": [
+      {
+        "target": "App.Cmd",
+        "exception": null,
+        "objects": [
+          {
+            "type": "App.Cmd",
+            "members": [
+              "Scope (key 0, String)",
+              "Member (key 1, Item\u003CInt32\u003E)"
+            ]
+          },
+          {
+            "type": "Lib.Item\u003CT\u003E",
+            "members": [
+              "Key (key 0, String)"
+            ]
+          }
+        ],
+        "closedGenerics": [
+          "Lib.Item\u003Cint\u003E"
+        ]
+      }
+    ],
+    "generatorException": null,
+    "generatorDiagnostics": [],
+    "analyzerDiagnostics": [],
+    "sourceErrors": [],
+    "generated": [
+      {
+        "hintName": "App.ProbeResolver.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(App.ProbeResolver), 3, 0)]\r\n\r\nnamespace App {\r\n\r\n/// \u003Csummary\u003EA MessagePack resolver that uses generated formatters for types in this assembly.\u003C/summary\u003E\r\npartial class ProbeResolver : MsgPack::IFormatterResolver\r\n{\r\n\t/// \u003Csummary\u003EAn instance of this resolver that only returns formatters specifically generated for types in this assembly.\u003C/summary\u003E\r\n\tpublic static readonly MsgPack::IFormatterResolver Instance = new ProbeResolver();\r\n\r\n\tprivate ProbeResolver()\r\n\t{\r\n\t}\r\n\r\n\tpublic MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E GetFormatter\u003CT\u003E()\r\n\t{\r\n\t\treturn FormatterCache\u003CT\u003E.Formatter;\r\n\t}\r\n\r\n\tprivate static class FormatterCache\u003CT\u003E\r\n\t{\r\n\t\tinternal static readonly MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E Formatter;\r\n\r\n\t\tstatic FormatterCache()\r\n\t\t{\r\n\t\t\tvar f = ProbeResolverGetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\tif (f != null)\r\n\t\t\t{\r\n\t\t\t\tFormatter = (MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E)f;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\r\n\tprivate static class ProbeResolverGetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E closedTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(2)\r\n\t\t{\r\n\t\t\t{ typeof(global::Lib.Item\u003Cint\u003E), 0 },\r\n\t\t\t{ typeof(global::App.Cmd), 1 },\r\n\t\t};\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E openTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(1)\r\n\t\t{\r\n\t\t\t{ typeof(global::Lib.Item\u003C\u003E), 0 },\r\n\t\t};\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (closedKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return new global::App.ProbeResolver.Lib.ItemFormatter\u003Cint\u003E();\r\n\t\t\t\t\tcase 1: return new global::App.ProbeResolver.App.CmdFormatter();\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\t\t\tif (t.IsGenericType \u0026\u0026 openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (openKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return global::System.Activator.CreateInstance(typeof(global::App.ProbeResolver.Lib.ItemFormatter\u003C\u003E).MakeGenericType(t.GenericTypeArguments));\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.App.CmdFormatter.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class App {\r\n\r\n\tinternal sealed class CmdFormatter : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::App.Cmd\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::App.Cmd value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (value == null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(2);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Serialize(ref writer, value.Scope, options);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::Lib.Item\u003Cint\u003E\u003E(formatterResolver).Serialize(ref writer, value.Member, options);\r\n\t\t}\r\n\r\n\t\tpublic global::App.Cmd Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar __Scope__ = default(string);\r\n\t\t\tvar __Member__ = default(global::Lib.Item\u003Cint\u003E);\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t__Scope__ = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tcase 1:\r\n\t\t\t\t\t\t__Member__ = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::Lib.Item\u003Cint\u003E\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\tvar ____result = new global::App.Cmd(__Scope__) { Member = __Member__ };\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.Lib.ItemFormatter\u00601.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class Lib {\r\n\r\n\tinternal sealed class ItemFormatter\u003CT\u003E : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::Lib.Item\u003CT\u003E\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::Lib.Item\u003CT\u003E value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Serialize(ref writer, value.Key, options);\r\n\t\t}\r\n\r\n\t\tpublic global::Lib.Item\u003CT\u003E Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\tthrow new global::System.InvalidOperationException(\u0022typecode is null, struct not supported\u0022);\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar __Key__ = default(string);\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t__Key__ = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\tvar ____result = new global::Lib.Item\u003CT\u003E(__Key__);\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      }
+    ],
+    "runtime": {
+      "built": true,
+      "generatedResolverPresent": true,
+      "valuesIn": "Scope=s; Member.Key=k",
+      "configs": [
+        {
+          "name": "default options",
+          "error": null,
+          "wire": "[\u0022s\u0022,[\u0022k\u0022]]",
+          "byteCount": 6,
+          "valuesOut": "Scope=s; Member.Key=k"
+        },
+        {
+          "name": "generated resolver first",
+          "error": null,
+          "wire": "[\u0022s\u0022,[\u0022k\u0022]]",
+          "byteCount": 6,
+          "valuesOut": "Scope=s; Member.Key=k"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ref-struct-unkeyed",
+    "title": "Referenced generic struct with one public member that has no [Key]",
+    "referencedSource": "using MessagePack;\nnamespace Lib;\n[MessagePackObject]\npublic struct Box\u003CT\u003E\n{\n    [Key(0)]\n    public string Name { get; set; }\n    public int Unkeyed { get; set; }\n}\n",
+    "projectSource": "using MessagePack;\nusing Lib;\nnamespace App;\n[MessagePackObject]\npublic class Holder\n{\n    [Key(0)]\n    public Box\u003Cint\u003E Value { get; set; }\n}\n",
+    "model": [
+      {
+        "target": "App.Holder",
+        "exception": null,
+        "objects": [
+          {
+            "type": "App.Holder",
+            "members": [
+              "Value (key 0, Box\u003CInt32\u003E)"
+            ]
+          },
+          {
+            "type": "Lib.Box\u003CT\u003E",
+            "members": [
+              "Name (key 0, String)"
+            ]
+          }
+        ],
+        "closedGenerics": [
+          "Lib.Box\u003Cint\u003E"
+        ]
+      }
+    ],
+    "generatorException": null,
+    "generatorDiagnostics": [],
+    "analyzerDiagnostics": [
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::Lib.Box\u003Cint\u003E.Unkeyed",
+        "location": "(none)"
+      },
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::Lib.Box\u003CT\u003E.Unkeyed",
+        "location": "(none)"
+      }
+    ],
+    "sourceErrors": [],
+    "generated": [
+      {
+        "hintName": "App.ProbeResolver.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(App.ProbeResolver), 3, 0)]\r\n\r\nnamespace App {\r\n\r\n/// \u003Csummary\u003EA MessagePack resolver that uses generated formatters for types in this assembly.\u003C/summary\u003E\r\npartial class ProbeResolver : MsgPack::IFormatterResolver\r\n{\r\n\t/// \u003Csummary\u003EAn instance of this resolver that only returns formatters specifically generated for types in this assembly.\u003C/summary\u003E\r\n\tpublic static readonly MsgPack::IFormatterResolver Instance = new ProbeResolver();\r\n\r\n\tprivate ProbeResolver()\r\n\t{\r\n\t}\r\n\r\n\tpublic MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E GetFormatter\u003CT\u003E()\r\n\t{\r\n\t\treturn FormatterCache\u003CT\u003E.Formatter;\r\n\t}\r\n\r\n\tprivate static class FormatterCache\u003CT\u003E\r\n\t{\r\n\t\tinternal static readonly MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E Formatter;\r\n\r\n\t\tstatic FormatterCache()\r\n\t\t{\r\n\t\t\tvar f = ProbeResolverGetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\tif (f != null)\r\n\t\t\t{\r\n\t\t\t\tFormatter = (MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E)f;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\r\n\tprivate static class ProbeResolverGetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E closedTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(2)\r\n\t\t{\r\n\t\t\t{ typeof(global::Lib.Box\u003Cint\u003E), 0 },\r\n\t\t\t{ typeof(global::App.Holder), 1 },\r\n\t\t};\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E openTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(1)\r\n\t\t{\r\n\t\t\t{ typeof(global::Lib.Box\u003C\u003E), 0 },\r\n\t\t};\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (closedKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return new global::App.ProbeResolver.Lib.BoxFormatter\u003Cint\u003E();\r\n\t\t\t\t\tcase 1: return new global::App.ProbeResolver.App.HolderFormatter();\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\t\t\tif (t.IsGenericType \u0026\u0026 openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (openKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return global::System.Activator.CreateInstance(typeof(global::App.ProbeResolver.Lib.BoxFormatter\u003C\u003E).MakeGenericType(t.GenericTypeArguments));\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.App.HolderFormatter.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class App {\r\n\r\n\tinternal sealed class HolderFormatter : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::App.Holder\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::App.Holder value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (value == null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::Lib.Box\u003Cint\u003E\u003E(formatterResolver).Serialize(ref writer, value.Value, options);\r\n\t\t}\r\n\r\n\t\tpublic global::App.Holder Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar ____result = new global::App.Holder();\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t____result.Value = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::Lib.Box\u003Cint\u003E\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.Lib.BoxFormatter\u00601.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class Lib {\r\n\r\n\tinternal sealed class BoxFormatter\u003CT\u003E : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::Lib.Box\u003CT\u003E\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::Lib.Box\u003CT\u003E value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Serialize(ref writer, value.Name, options);\r\n\t\t}\r\n\r\n\t\tpublic global::Lib.Box\u003CT\u003E Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\tthrow new global::System.InvalidOperationException(\u0022typecode is null, struct not supported\u0022);\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar ____result = new global::Lib.Box\u003CT\u003E();\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t____result.Name = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      }
+    ],
+    "runtime": {
+      "built": true,
+      "generatedResolverPresent": true,
+      "valuesIn": "Name=a; Unkeyed=7",
+      "configs": [
+        {
+          "name": "default options",
+          "error": "MessagePackDynamicObjectResolverException: all public members must mark KeyAttribute or IgnoreMemberAttribute. type:Lib.Box\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]] member:Unkeyed",
+          "wire": null,
+          "byteCount": 0,
+          "valuesOut": null
+        },
+        {
+          "name": "generated resolver first",
+          "error": null,
+          "wire": "[[\u0022a\u0022]]",
+          "byteCount": 4,
+          "valuesOut": "Name=a; Unkeyed=0"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ref-class-unkeyed",
+    "title": "Referenced generic class (not a struct) with one public member that has no [Key]",
+    "referencedSource": "using MessagePack;\nnamespace Lib;\n[MessagePackObject]\npublic class Bag\u003CT\u003E\n{\n    [Key(0)]\n    public string Name { get; set; }\n    public int Unkeyed { get; set; }\n}\n",
+    "projectSource": "using MessagePack;\nusing Lib;\nnamespace App;\n[MessagePackObject]\npublic class Holder\n{\n    [Key(0)]\n    public Bag\u003Cint\u003E Value { get; set; }\n}\n",
+    "model": [
+      {
+        "target": "App.Holder",
+        "exception": null,
+        "objects": [
+          {
+            "type": "App.Holder",
+            "members": [
+              "Value (key 0, Bag\u003CInt32\u003E)"
+            ]
+          },
+          {
+            "type": "Lib.Bag\u003CT\u003E",
+            "members": [
+              "Name (key 0, String)"
+            ]
+          }
+        ],
+        "closedGenerics": [
+          "Lib.Bag\u003Cint\u003E"
+        ]
+      }
+    ],
+    "generatorException": null,
+    "generatorDiagnostics": [],
+    "analyzerDiagnostics": [
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::Lib.Bag\u003Cint\u003E.Unkeyed",
+        "location": "(none)"
+      },
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::Lib.Bag\u003CT\u003E.Unkeyed",
+        "location": "(none)"
+      }
+    ],
+    "sourceErrors": [],
+    "generated": [
+      {
+        "hintName": "App.ProbeResolver.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(App.ProbeResolver), 3, 0)]\r\n\r\nnamespace App {\r\n\r\n/// \u003Csummary\u003EA MessagePack resolver that uses generated formatters for types in this assembly.\u003C/summary\u003E\r\npartial class ProbeResolver : MsgPack::IFormatterResolver\r\n{\r\n\t/// \u003Csummary\u003EAn instance of this resolver that only returns formatters specifically generated for types in this assembly.\u003C/summary\u003E\r\n\tpublic static readonly MsgPack::IFormatterResolver Instance = new ProbeResolver();\r\n\r\n\tprivate ProbeResolver()\r\n\t{\r\n\t}\r\n\r\n\tpublic MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E GetFormatter\u003CT\u003E()\r\n\t{\r\n\t\treturn FormatterCache\u003CT\u003E.Formatter;\r\n\t}\r\n\r\n\tprivate static class FormatterCache\u003CT\u003E\r\n\t{\r\n\t\tinternal static readonly MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E Formatter;\r\n\r\n\t\tstatic FormatterCache()\r\n\t\t{\r\n\t\t\tvar f = ProbeResolverGetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\tif (f != null)\r\n\t\t\t{\r\n\t\t\t\tFormatter = (MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E)f;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\r\n\tprivate static class ProbeResolverGetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E closedTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(2)\r\n\t\t{\r\n\t\t\t{ typeof(global::Lib.Bag\u003Cint\u003E), 0 },\r\n\t\t\t{ typeof(global::App.Holder), 1 },\r\n\t\t};\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E openTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(1)\r\n\t\t{\r\n\t\t\t{ typeof(global::Lib.Bag\u003C\u003E), 0 },\r\n\t\t};\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (closedKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return new global::App.ProbeResolver.Lib.BagFormatter\u003Cint\u003E();\r\n\t\t\t\t\tcase 1: return new global::App.ProbeResolver.App.HolderFormatter();\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\t\t\tif (t.IsGenericType \u0026\u0026 openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (openKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return global::System.Activator.CreateInstance(typeof(global::App.ProbeResolver.Lib.BagFormatter\u003C\u003E).MakeGenericType(t.GenericTypeArguments));\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.App.HolderFormatter.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class App {\r\n\r\n\tinternal sealed class HolderFormatter : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::App.Holder\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::App.Holder value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (value == null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::Lib.Bag\u003Cint\u003E\u003E(formatterResolver).Serialize(ref writer, value.Value, options);\r\n\t\t}\r\n\r\n\t\tpublic global::App.Holder Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar ____result = new global::App.Holder();\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t____result.Value = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::Lib.Bag\u003Cint\u003E\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.Lib.BagFormatter\u00601.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class Lib {\r\n\r\n\tinternal sealed class BagFormatter\u003CT\u003E : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::Lib.Bag\u003CT\u003E\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::Lib.Bag\u003CT\u003E value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (value == null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Serialize(ref writer, value.Name, options);\r\n\t\t}\r\n\r\n\t\tpublic global::Lib.Bag\u003CT\u003E Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar ____result = new global::Lib.Bag\u003CT\u003E();\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t____result.Name = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      }
+    ],
+    "runtime": {
+      "built": true,
+      "generatedResolverPresent": true,
+      "valuesIn": "Name=a; Unkeyed=7",
+      "configs": [
+        {
+          "name": "default options",
+          "error": "MessagePackDynamicObjectResolverException: all public members must mark KeyAttribute or IgnoreMemberAttribute. type:Lib.Bag\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]] member:Unkeyed",
+          "wire": null,
+          "byteCount": 0,
+          "valuesOut": null
+        },
+        {
+          "name": "generated resolver first",
+          "error": null,
+          "wire": "[[\u0022a\u0022]]",
+          "byteCount": 4,
+          "valuesOut": "Name=a; Unkeyed=0"
+        }
+      ]
+    }
+  },
+  {
+    "id": "source-unkeyed-control",
+    "title": "Control: the same unkeyed member, but the type is declared in the project being compiled",
+    "referencedSource": null,
+    "projectSource": "using MessagePack;\nnamespace App;\n[MessagePackObject]\npublic struct Box\u003CT\u003E\n{\n    [Key(0)]\n    public string Name { get; set; }\n    public int Unkeyed { get; set; }\n}\n[MessagePackObject]\npublic class Holder\n{\n    [Key(0)]\n    public Box\u003Cint\u003E Value { get; set; }\n}\n",
+    "model": [
+      {
+        "target": "App.Box\u003CT\u003E",
+        "exception": null,
+        "objects": [
+          {
+            "type": "App.Box\u003CT\u003E",
+            "members": [
+              "Name (key 0, String)"
+            ]
+          }
+        ],
+        "closedGenerics": []
+      },
+      {
+        "target": "App.Holder",
+        "exception": null,
+        "objects": [
+          {
+            "type": "App.Holder",
+            "members": [
+              "Value (key 0, Box\u003CInt32\u003E)"
+            ]
+          },
+          {
+            "type": "App.Box\u003CT\u003E",
+            "members": [
+              "Name (key 0, String)"
+            ]
+          }
+        ],
+        "closedGenerics": [
+          "App.Box\u003Cint\u003E"
+        ]
+      }
+    ],
+    "generatorException": null,
+    "generatorDiagnostics": [],
+    "analyzerDiagnostics": [
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::App.Box\u003CT\u003E.Unkeyed",
+        "location": "App.cs:8"
+      },
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::App.Box\u003Cint\u003E.Unkeyed",
+        "location": "App.cs:8"
+      },
+      {
+        "id": "MsgPack004",
+        "severity": "Error",
+        "message": "Properties and fields of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute: global::App.Box\u003CT\u003E.Unkeyed",
+        "location": "App.cs:8"
+      }
+    ],
+    "sourceErrors": [],
+    "generated": [
+      {
+        "hintName": "App.ProbeResolver.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\n[assembly: MsgPack::Internal.GeneratedAssemblyMessagePackResolverAttribute(typeof(App.ProbeResolver), 3, 0)]\r\n\r\nnamespace App {\r\n\r\n/// \u003Csummary\u003EA MessagePack resolver that uses generated formatters for types in this assembly.\u003C/summary\u003E\r\npartial class ProbeResolver : MsgPack::IFormatterResolver\r\n{\r\n\t/// \u003Csummary\u003EAn instance of this resolver that only returns formatters specifically generated for types in this assembly.\u003C/summary\u003E\r\n\tpublic static readonly MsgPack::IFormatterResolver Instance = new ProbeResolver();\r\n\r\n\tprivate ProbeResolver()\r\n\t{\r\n\t}\r\n\r\n\tpublic MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E GetFormatter\u003CT\u003E()\r\n\t{\r\n\t\treturn FormatterCache\u003CT\u003E.Formatter;\r\n\t}\r\n\r\n\tprivate static class FormatterCache\u003CT\u003E\r\n\t{\r\n\t\tinternal static readonly MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E Formatter;\r\n\r\n\t\tstatic FormatterCache()\r\n\t\t{\r\n\t\t\tvar f = ProbeResolverGetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\tif (f != null)\r\n\t\t\t{\r\n\t\t\t\tFormatter = (MsgPack::Formatters.IMessagePackFormatter\u003CT\u003E)f;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\r\n\tprivate static class ProbeResolverGetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E closedTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(2)\r\n\t\t{\r\n\t\t\t{ typeof(global::App.Box\u003Cint\u003E), 0 },\r\n\t\t\t{ typeof(global::App.Holder), 1 },\r\n\t\t};\r\n\t\tprivate static readonly global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E openTypeLookup = new global::System.Collections.Generic.Dictionary\u003Cglobal::System.Type, int\u003E(1)\r\n\t\t{\r\n\t\t\t{ typeof(global::App.Box\u003C\u003E), 0 },\r\n\t\t};\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n\t\t\tif (closedTypeLookup.TryGetValue(t, out int closedKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (closedKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return new global::App.ProbeResolver.App.BoxFormatter\u003Cint\u003E();\r\n\t\t\t\t\tcase 1: return new global::App.ProbeResolver.App.HolderFormatter();\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\t\t\tif (t.IsGenericType \u0026\u0026 openTypeLookup.TryGetValue(t.GetGenericTypeDefinition(), out int openKey))\r\n\t\t\t{\r\n\t\t\t\tswitch (openKey)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0: return global::System.Activator.CreateInstance(typeof(global::App.ProbeResolver.App.BoxFormatter\u003C\u003E).MakeGenericType(t.GenericTypeArguments));\r\n\t\t\t\t\tdefault: return null; // unreachable\r\n\t\t\t\t};\r\n\t\t\t}\r\n\r\n\t\t\treturn null;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.App.HolderFormatter.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class App {\r\n\r\n\tinternal sealed class HolderFormatter : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::App.Holder\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::App.Holder value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (value == null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::App.Box\u003Cint\u003E\u003E(formatterResolver).Serialize(ref writer, value.Value, options);\r\n\t\t}\r\n\r\n\t\tpublic global::App.Holder Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar ____result = new global::App.Holder();\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t____result.Value = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cglobal::App.Box\u003Cint\u003E\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      },
+      {
+        "hintName": "Formatters.App.ProbeResolver.App.BoxFormatter\u00601.g.cs",
+        "text": "// \u003Cauto-generated /\u003E\r\n\r\n#pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649\r\n\r\n#pragma warning disable CS8669 // We may leak nullable annotations into generated code.\r\n\r\nusing MsgPack = global::MessagePack;\r\n\r\nnamespace App {\r\npartial class ProbeResolver {\r\ninternal partial class App {\r\n\r\n\tinternal sealed class BoxFormatter\u003CT\u003E : MsgPack::Formatters.IMessagePackFormatter\u003Cglobal::App.Box\u003CT\u003E\u003E\r\n\t{\r\n\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, global::App.Box\u003CT\u003E value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\twriter.WriteArrayHeader(1);\r\n\t\t\tMsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Serialize(ref writer, value.Name, options);\r\n\t\t}\r\n\r\n\t\tpublic global::App.Box\u003CT\u003E Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r\n\t\t\t\tthrow new global::System.InvalidOperationException(\u0022typecode is null, struct not supported\u0022);\r\n\t\t\t}\r\n\r\n\t\t\toptions.Security.DepthStep(ref reader);\r\n\t\t\tMsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n\t\t\tvar length = reader.ReadArrayHeader();\r\n\t\t\tvar ____result = new global::App.Box\u003CT\u003E();\r\n\r\n\t\t\tfor (int i = 0; i \u003C length; i\u002B\u002B)\r\n\t\t\t{\r\n\t\t\t\tswitch (i)\r\n\t\t\t\t{\r\n\t\t\t\t\tcase 0:\r\n\t\t\t\t\t\t____result.Name = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify\u003Cstring\u003E(formatterResolver).Deserialize(ref reader, options);\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\t\treader.Skip();\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n\t\t\treader.Depth--;\r\n\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n}\r\n}\r\n"
+      }
+    ],
+    "runtime": {
+      "built": true,
+      "generatedResolverPresent": true,
+      "valuesIn": "Name=a; Unkeyed=7",
+      "configs": [
+        {
+          "name": "default options",
+          "error": null,
+          "wire": "[[\u0022a\u0022]]",
+          "byteCount": 4,
+          "valuesOut": "Name=a; Unkeyed=0"
+        },
+        {
+          "name": "generated resolver first",
+          "error": null,
+          "wire": "[[\u0022a\u0022]]",
+          "byteCount": 4,
+          "valuesOut": "Name=a; Unkeyed=0"
+        }
+      ]
+    }
+  }
+]

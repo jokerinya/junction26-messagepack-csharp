@@ -1,0 +1,39 @@
+[
+  {
+    "id": "issue-repro",
+    "title": "The exact repro from the issue: generic record struct in a referenced assembly",
+    "referencedSource": "using MessagePack;\nnamespace Lib;\n[MessagePackObject]\npublic partial record struct Item<T>([property: Key(0)] string Key);\n",
+    "projectSource": "using MessagePack;\nusing Lib;\nnamespace App;\n[MessagePackObject]\npublic sealed partial record Cmd([property: Key(0)] string Scope)\n{\n    [Key(1)]\n    public Item<int> Member { get; init; }\n}\n",
+    "makeExpression": "new Cmd(\"s\") { Member = new Item<int>(\"k\") }",
+    "describeExpression": "$\"Scope={((Cmd)o).Scope}; Member.Key={((Cmd)o).Member.Key}\"",
+    "covers": [
+      "R1",
+      "R2"
+    ],
+    "reproducesIssue": true
+  },
+  {
+    "id": "ref-class-unkeyed",
+    "title": "Referenced generic class with one public member that has no [Key]",
+    "referencedSource": "using MessagePack;\nnamespace Lib;\n[MessagePackObject]\npublic class Bag<T>\n{\n    [Key(0)]\n    public string Name { get; set; }\n    public int Unkeyed { get; set; }\n}\n",
+    "projectSource": "using MessagePack;\nusing Lib;\nnamespace App;\n[MessagePackObject]\npublic class Holder\n{\n    [Key(0)]\n    public Bag<int> Value { get; set; }\n}\n",
+    "makeExpression": "new Holder { Value = new Bag<int> { Name = \"a\", Unkeyed = 7 } }",
+    "describeExpression": "((Holder)o).Value is null ? \"Value=null\" : $\"Name={((Holder)o).Value.Name}; Unkeyed={((Holder)o).Value.Unkeyed}\"",
+    "covers": [
+      "R3"
+    ],
+    "reproducesIssue": false
+  },
+  {
+    "id": "source-unkeyed-control",
+    "title": "Control: the same unkeyed member, but the type is declared in the project being compiled",
+    "referencedSource": null,
+    "projectSource": "using MessagePack;\nnamespace App;\n[MessagePackObject]\npublic struct Box<T>\n{\n    [Key(0)]\n    public string Name { get; set; }\n    public int Unkeyed { get; set; }\n}\n[MessagePackObject]\npublic class Holder\n{\n    [Key(0)]\n    public Box<int> Value { get; set; }\n}\n",
+    "makeExpression": "new Holder { Value = new Box<int> { Name = \"a\", Unkeyed = 7 } }",
+    "describeExpression": "$\"Name={((Holder)o).Value.Name}; Unkeyed={((Holder)o).Value.Unkeyed}\"",
+    "covers": [
+      "R4"
+    ],
+    "reproducesIssue": false
+  }
+]

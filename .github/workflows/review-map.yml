@@ -1,0 +1,169 @@
+# Review map: an AI reviewer for AI-written pull requests.
+# Three jobs, so the code under review never runs on a machine that holds a secret:
+#   plan      reads the diff and the issue, the reviewing agent picks real inputs   (API key, no PR code runs)
+#   evidence  builds the PR and runs those inputs and the tests, before and after   (no secrets, read-only token)
+#   analyze   the reviewing agent explains the evidence; the comment is posted      (API key + write token, no PR code runs)
+# The reviewer itself is always taken from the base branch, so a pull request cannot change its own reviewer.
+
+name: Review map
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number
+        required: true
+
+concurrency:
+  group: review-map-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PR: ${{ github.event.pull_request.number || inputs.pr }}
+  # Model for the reviewing agent. Override without editing this file by setting a repository
+  # variable REVIEW_MAP_MODEL (for example claude-opus-5-5 for a stronger, pricier review).
+  REVIEW_MAP_MODEL: ${{ vars.REVIEW_MAP_MODEL || 'claude-sonnet-5-5' }}
+  # Who owns the decisions the review refuses to make: GitHub logins, either "alice,bob" or per reason
+  # "intent=alice,trade-off=bob,unreproduced=carol,out-of-reach=dave,default=alice". Without it, the
+  # PR's requested reviewers and assignees are used, and otherwise decisions are shown as unassigned.
+  REVIEW_MAP_OWNERS: ${{ vars.REVIEW_MAP_OWNERS }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      head: ${{ steps.pr.outputs.head }}
+      base: ${{ steps.pr.outputs.base }}
+    steps:
+      - name: Resolve the pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # base is the base branch (its current tip), not the PR's recorded base commit, which GitHub
+        # can leave stale; the reviewer is taken from there.
+        run: gh api "repos/${{ github.repository }}/pulls/$PR" --jq '"head=\(.head.sha)\nbase=\(.base.ref)"' >> "$GITHUB_OUTPUT"
+      - name: Check out the code under review (not executed in this job)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.head }}
+          fetch-depth: 0
+          path: target
+          persist-credentials: false
+      - name: Check out the reviewer from the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.base }}
+          path: reviewer
+          sparse-checkout: .review-map
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix reviewer/.review-map
+      - name: Reviewing agent chooses real inputs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "::error::Add an ANTHROPIC_API_KEY repository secret to run the review map."; exit 1; fi
+          node reviewer/.review-map/review.mjs plan --repo target --pr "$PR" --out out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plan
+          path: out
+
+  evidence:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out the code under review
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.head }}
+          fetch-depth: 0
+          path: target
+          persist-credentials: false
+      - name: Check out the reviewer from the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.base }}
+          path: reviewer
+          sparse-checkout: .review-map
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: target/global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix reviewer/.review-map
+      - uses: actions/download-artifact@v4
+        with:
+          name: plan
+          path: out
+      - name: Run the inputs and the tests, before and after the change
+        run: node reviewer/.review-map/review.mjs evidence --repo target --out out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: out/evidence
+        if: always()
+
+  analyze:
+    needs: [plan, evidence]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check out the code under review (diff only, not executed)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.head }}
+          fetch-depth: 0
+          path: target
+          persist-credentials: false
+      - name: Check out the reviewer from the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.base }}
+          path: reviewer
+          sparse-checkout: .review-map
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix reviewer/.review-map
+      - uses: actions/download-artifact@v4
+        with:
+          name: plan
+          path: out
+      - uses: actions/download-artifact@v4
+        with:
+          name: evidence
+          path: out/evidence
+      - name: Reviewing agent explains the evidence
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: node reviewer/.review-map/review.mjs analyze --repo target --out out
+      - name: Post or update the review map comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_MAP_COMMENT_AUTHOR: github-actions[bot]
+        run: node reviewer/.review-map/review.mjs post --out out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-map
+          path: out
+        if: always()

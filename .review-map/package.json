@@ -1,0 +1,16 @@
+{
+  "name": "review-map",
+  "private": true,
+  "type": "module",
+  "description": "Reviews an agent-written pull request by running it, and explains it as a pipeline map with real inputs and outputs.",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "zod": "^4.6.7"
+  },
+  "scripts": {
+    "test": "node --test test/gate.test.mjs"
+  }
+}

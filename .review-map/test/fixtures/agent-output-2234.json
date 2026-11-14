@@ -1,0 +1,216 @@
+{
+  "model": "fixture (hand-written agent output with planted mistakes)",
+  "usage": null,
+  "value": {
+    "summary": [
+      {
+        "sentence": "Duplicate or mixed keys no longer crash the type collector; it now keeps one member.",
+        "refs": [
+          "run:generated-dup-string-keys-fields:model:both:differs"
+        ]
+      },
+      {
+        "sentence": "The kept formatter silently loses the second member's value.",
+        "refs": [
+          "run:generated-dup-string-keys-fields:rtGenerated:both:differs"
+        ]
+      },
+      {
+        "sentence": "PLANTED: a sentence with no evidence at all.",
+        "refs": []
+      }
+    ],
+    "nodes": [
+      {
+        "id": "TC",
+        "label": "TypeCollector",
+        "sub": "builds the model",
+        "status": "changed"
+      },
+      {
+        "id": "GEN",
+        "label": "Templates",
+        "sub": "emit formatters",
+        "status": "affected"
+      },
+      {
+        "id": "RT",
+        "label": "Run time",
+        "sub": "serialize",
+        "status": "affected"
+      }
+    ],
+    "edges": [
+      {
+        "from": "TC",
+        "to": "GEN",
+        "label": "① model",
+        "changed": true
+      },
+      {
+        "from": "GEN",
+        "to": "RT",
+        "label": "③ C# files",
+        "changed": true
+      }
+    ],
+    "traces": [
+      {
+        "id": "generated-dup-string-keys-fields",
+        "title": "Two fields share a string key",
+        "story": "① the model keeps F1 only, so ③ emits a formatter for one member and ④ reads F2 back as 0.",
+        "where": []
+      }
+    ],
+    "units": [
+      {
+        "name": "TypeCollector member collection",
+        "status": "changed",
+        "where": "",
+        "receives": "a type symbol",
+        "emits": "the model",
+        "change": "skips a member whose key is taken",
+        "examples": [
+          {
+            "note": "Mixed keys: the collector used to throw, now keeps A.",
+            "refs": [
+              "run:mixed-keys-props-int-first:model:both:differs"
+            ]
+          },
+          {
+            "note": "PLANTED: cites a scenario that never ran.",
+            "refs": [
+              "run:no-such-scenario:model:both:differs"
+            ]
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "claim": "Duplicate int keys are reported without an analyzer failure",
+        "source": "test name",
+        "verdict": "verified",
+        "evidence": "The new test fails on the old code and passes now.",
+        "refs": [
+          "test:SuppressSourceGenerationAnalyzerTests.DuplicateIntKeysAreReportedWithoutAnalyzerFailure:fails-before-passes-after"
+        ]
+      },
+      {
+        "claim": "PLANTED: all tests pass",
+        "source": "PR text",
+        "verdict": "verified",
+        "evidence": "all 170 tests passed",
+        "refs": [
+          "test:all 170 tests passed:any"
+        ]
+      },
+      {
+        "claim": "PLANTED: private required members are newly reported",
+        "source": "test name",
+        "verdict": "verified",
+        "evidence": "new test",
+        "refs": [
+          "test:AllowPrivateRequiredIsReported:fails-before-passes-after"
+        ]
+      },
+      {
+        "claim": "A colliding member is skipped rather than added",
+        "source": "code comment",
+        "verdict": "verified",
+        "evidence": "The guard is in the code.",
+        "refs": [
+          "code:src/MessagePack.SourceGenerator/CodeAnalysis/TypeCollector.cs:1023-1026"
+        ]
+      },
+      {
+        "claim": "Fixes the issue's main symptom",
+        "source": "PR title",
+        "verdict": "not-verified",
+        "evidence": "No scenario reproduces the issue's report.",
+        "refs": []
+      },
+      {
+        "claim": "PLANTED: malformed pointer",
+        "source": "PR text",
+        "verdict": "verified",
+        "evidence": "x",
+        "refs": [
+          "run:generated-dup-string-keys-fields:model"
+        ]
+      }
+    ],
+    "found": [
+      {
+        "severity": "WARNING",
+        "statement": "A duplicate key now compiles into a formatter that drops data",
+        "refs": [
+          "run:generated-dup-string-keys-fields:generated:both:differs",
+          "run:generated-dup-string-keys-fields:rtGenerated:after:any"
+        ]
+      },
+      {
+        "severity": "CAUTION",
+        "statement": "PLANTED: wrong direction. Claims the suppressed duplicate-int case now generates files.",
+        "refs": [
+          "run:suppressed-dup-int-keys:generated:both:differs"
+        ]
+      },
+      {
+        "severity": "WARNING",
+        "statement": "Code-only warning: the guard skips a colliding member.",
+        "refs": [
+          "code:src/MessagePack.SourceGenerator/CodeAnalysis/TypeCollector.cs:1023-1026"
+        ]
+      },
+      {
+        "severity": "NOTE",
+        "statement": "Valid types are unaffected. The control input behaves the same on both sides.",
+        "refs": [
+          "run:suppressed-valid-control:rtDefault:both:same"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "question": "Is \"first member wins\" acceptable for duplicate keys?",
+        "reason": "trade-off",
+        "detail": "The generator now emits a formatter that keeps the first member; MsgPack005 still fails the build.",
+        "wouldSettleIt": "A maintainer decision on generator behaviour for invalid types.",
+        "options": [
+          "Keep it while MsgPack005 stays an error",
+          "Skip invalid types in the generator"
+        ],
+        "refs": [
+          "run:generated-dup-string-keys-fields:rtGenerated:after:any"
+        ]
+      }
+    ],
+    "notChecked": [
+      {
+        "item": "Map-mode execution",
+        "reason": "no scenario uses map mode at run time",
+        "riskIfWrong": "string-keyed types behave differently",
+        "howToCheck": "run MessagePack.SourceGenerator.MapModeExecutionTests"
+      }
+    ],
+    "requirements": [
+      {
+        "id": "R1",
+        "verdict": "met",
+        "note": "Duplicate keys no longer crash the collector.",
+        "refs": [
+          "run:generated-dup-string-keys-fields:model:both:differs"
+        ]
+      },
+      {
+        "id": "R2",
+        "verdict": "met",
+        "note": "Only read in the code.",
+        "refs": [
+          "code:src/MessagePack.SourceGenerator/CodeAnalysis/TypeCollector.cs:1023-1026"
+        ]
+      }
+    ]
+  }
+}
