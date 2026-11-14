@@ -67,6 +67,26 @@ git checkout ju26-issue-2283
 
 The scripts use only the Python 3 standard library. A team's own profile goes in `<repo>/.trust-review/profile/` and wins over bundled ones. Commit `<repo>/.trust-review/ledger.jsonl`: it is the team's track record.
 
+## Sign-off on the pull request
+
+In the GitHub Actions pipeline the named owner signs with a comment on the PR, and the merge is blocked until they do.
+
+```
+/sign-off accept [--minutes N] [--overrule "why"] [--risk "what I accept"] [note]
+/sign-off reject [--minutes N] [note]
+```
+
+| Rule | Why |
+|---|---|
+| Only an assignee of the PR can sign. A comment from anyone else gets a 👎 and nothing more | The owner is a named engineer, not whoever is passing by |
+| The dossier must be for the PR's current commit. A new push needs a new review and a new sign-off | A signature covers what was reviewed, nothing later |
+| Accepting a `BLOCK` or `NOT-FIX` recommendation needs `--overrule "why"` | The human can overrule the AI, but has to say why, and the reason is recorded and shown on the card |
+| The card is found only among the workflow's own comments | Nobody can plant a card with a friendlier outcome |
+
+A valid sign-off turns the **Trust sign-off** status green (red for reject), changes the card header to "SIGNED by `<name>`", and appends the sign-off to `ledger.jsonl` on the `trust-ledger` branch. The pipeline reads that branch at the start of every review, so area trust is earned from real history. To block merges, make **Trust sign-off** a required status check on the target branch. Repository admins can still bypass it unless the rule says otherwise.
+
+Script: `skills/sign-off/scripts/pr_flow.py` (`post-card`, `sign-off`, `ledger-pull`). Workflow: `review-map/workflows/trust-sign-off.yml`. The local command `/reviewer-tieto:sign-off` still works and records more detail (units read, spot-check, AI misses).
+
 ## Executed evidence from review-map
 
 [`review-map`](../../review-map/) runs a change on real inputs and on the repo's tests, before and after, in a CI job that holds no secrets. When a recorded run exists for the commit under review, `trust-review` imports what its scripts measured and the verifier does not repeat it:

@@ -6,7 +6,9 @@
 #   analyze   review-map checks its agent's pointers against the recorded runs     (API key, no PR code runs)
 #   dossier   reviewer-tieto: risk triage, six lenses and the verifier, using the
 #             recorded runs as executed evidence; writes the Trust Dossier         (API key, read-only token, no SDK)
-#   post      creates or updates the single Trust Dossier comment                  (write token, no agent, no PR code)
+#   post      creates or updates the single Trust Dossier comment, sets the
+#             "Trust sign-off" status to pending, appends to the ledger branch    (write token, no agent, no PR code)
+# The owner then signs with a "/sign-off" comment: see trust-sign-off.yml.
 # The reviewer itself is always taken from the base branch, so a pull request cannot change its own reviewer.
 
 name: Earned Trust Review
@@ -219,6 +221,10 @@ jobs:
           echo "req=$req" >> "$GITHUB_OUTPUT"
           echo "owner=$owner" >> "$GITHUB_OUTPUT"
           git -C target remote set-head origin "${{ needs.plan.outputs.base }}"
+      - name: Bring the team's track record (ledger branch), so area trust is earned from history
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 reviewer/.reviewer-tieto/skills/sign-off/scripts/pr_flow.py ledger-pull --slug "${{ github.repository }}" --to target/.trust-review/ledger.jsonl
       - name: Trust review (six lenses and the verifier, with the recorded runs as executed evidence)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -251,27 +257,31 @@ jobs:
         if: always()
 
   post:
-    needs: dossier
+    needs: [plan, dossier]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      contents: write        # the ledger branch
       pull-requests: write
       issues: write
+      statuses: write
     steps:
+      - name: Check out the reviewer from the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.base }}
+          path: reviewer
+          sparse-checkout: .reviewer-tieto
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           name: trust-dossier
           path: dossier
-      - name: Create or update the one Trust Dossier comment
+      - name: Post the one Trust Dossier comment, set "Trust sign-off" to pending, record the review
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          marker='<!-- trust-dossier:v1 -->'
-          { echo "$marker"; cat dossier/pr-comment.md; echo; echo "<sub>Produced by the Earned Trust Review workflow, [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Full dossier and evidence: the run's artifacts.</sub>"; } > body.md
-          if [ "$(wc -c < body.md)" -gt 64000 ]; then echo "::error::The comment is over GitHub's size limit."; exit 1; fi
-          id=$(gh api --paginate "repos/${{ github.repository }}/issues/$PR/comments" --jq ".[] | select(.user.login == \"github-actions[bot]\") | select(.body | startswith(\"$marker\")) | .id" | tail -1)
-          if [ -n "$id" ]; then
-            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@body.md --jq .html_url
-          else
-            gh api -X POST "repos/${{ github.repository }}/issues/$PR/comments" -F body=@body.md --jq .html_url
-          fi
+          python3 reviewer/.reviewer-tieto/skills/sign-off/scripts/pr_flow.py post-card \
+            --slug "${{ github.repository }}" --pr "$PR" --head "${{ needs.plan.outputs.head }}" \
+            --dossier-dir dossier \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

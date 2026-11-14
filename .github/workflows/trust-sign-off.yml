@@ -1,0 +1,50 @@
+# Trust sign-off: the named owner signs a Trust Dossier with a pull-request comment.
+#
+#   /sign-off accept [--minutes N] [--overrule "why"] [--risk "what I accept"] [note]
+#   /sign-off reject [--minutes N] [note]
+#
+# Only an assignee of the PR can sign, only for the commit the dossier reviewed, and accepting a
+# BLOCK or NOT-FIX recommendation needs --overrule "why". A valid sign-off turns the
+# "Trust sign-off" status green (or red for reject), shows the signer on the card, and is appended
+# to the ledger branch. Make that status a required check on the target branch to block merges
+# until a named human has signed.
+#
+# This job runs no agent and no PR code. The comment text is passed as an environment variable and
+# parsed by a script taken from the default branch.
+
+name: Trust sign-off
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  sign-off:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/sign-off')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write        # the ledger branch
+      pull-requests: write
+      issues: write
+      statuses: write
+    concurrency:
+      group: trust-sign-off-${{ github.event.issue.number }}
+    steps:
+      - name: Check out the sign-off script from the default branch
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .reviewer-tieto
+          persist-credentials: false
+      - name: Check the signer and record the sign-off
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGN_OFF_BODY: ${{ github.event.comment.body }}
+          AUTHOR: ${{ github.event.comment.user.login }}
+        run: |
+          python3 .reviewer-tieto/skills/sign-off/scripts/pr_flow.py sign-off \
+            --slug "${{ github.repository }}" --pr "${{ github.event.issue.number }}" \
+            --author "$AUTHOR" --comment-id "${{ github.event.comment.id }}"
